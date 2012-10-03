@@ -4,6 +4,8 @@ from django.contrib.admin.models import User
 import annoying.fields
 import django.core.exceptions
 
+import datetime
+
 # Create your models here.
 class Student(models.Model):
   """Represents one EECS 183 student."""
@@ -36,16 +38,16 @@ class Submission(models.Model):
 
 class SubmissionGrade(models.Model):
   """Represents one grader's grading one project."""
-  grader = annoying.fields.AutoOneToOneField(User)
+  grader = models.ForeignKey(User)
   submission = models.ForeignKey(Submission)
-  comments = models.TextField(null=True)
+  comments = models.TextField(blank=True)
   adjustment = models.IntegerField(default=0)
   complete = models.BooleanField(default=False)
+  date = models.DateTimeField('date grade submitted', auto_now_add=True)
 
   def __unicode__(self):
     try:
-      return u"<graded %s %i/%i>" % (unicode(self.submission), self.total_score,
-                                     self.submission.project.points)
+      return u"<%s graded by %s>" % (unicode(self.submission), unicode(self.grader))
     except django.core.exceptions.ObjectDoesNotExist:
       return u"Broken"
 
@@ -65,8 +67,8 @@ class LineItem(models.Model):
 class LineGrade(models.Model):
   """Represents one student's points earned on one item."""
   submissiongrade = models.ForeignKey(SubmissionGrade)
-  lineitem = annoying.fields.AutoOneToOneField(LineItem)
-  points = models.IntegerField()
+  lineitem = models.ForeignKey(LineItem)
+  points = models.IntegerField(default=0)
 
   def __unicode__(self):
     try:

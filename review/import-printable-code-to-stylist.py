@@ -3,6 +3,7 @@
 import sys
 import os
 import random
+import datetime
 
 def setup_environment():
     pathname = os.path.dirname(sys.argv[0])
@@ -31,9 +32,14 @@ def main(argv=None):
   projects = os.listdir(sys.argv[2])
   random.shuffle(projects)
 
+  def lookup_grader(uniqname):
+    grad = User.objects.filter(username=uniqname)
+    assert len(grad) == 1, uniqname
+    return grad[0]
+
   # Read graders
   graders = [line.split() for line in open(sys.argv[3])]
-  graders = [(uniqname, float(prop)) for (uniqname, prop) in graders]
+  graders = [(lookup_grader(uniqname), float(prop)) for (uniqname, prop) in graders]
   assert len(set(zip(*graders)[0])) == len(graders)
 
   # Figure out how many projects to each grader
@@ -45,9 +51,12 @@ def main(argv=None):
 
   # Divide up the work
   work = {}
+  revwork = {}
   pkill = projects[:]
   for (grader, count) in graders:
     work[grader] = pkill[:count]
+    for proj in work[grader]:
+      revwork[proj] = grader
     del pkill[:count]
   assert sum(map(len, work.values())) == len(projects)
 
@@ -65,7 +74,7 @@ def main(argv=None):
   # Confirm
   print "About to assign:"
   for (grader, p) in work.iteritems():
-    print "\t%i projects to %s" % (len(p), grader)
+    print "\t%i projects to %s" % (len(p), grader.username)
   print "Will write the code for them to read to", sys.argv[4]
   print
 
@@ -89,6 +98,62 @@ def main(argv=None):
   if raw_input() != "y":
     print "OK, no changes will be made."
     return
+
+  # Do the actual database load.
+
+
+
+
+
+
+  # Begin by deleting any existing LineGrades, SubmissionGrades, and Submissions for the project
+  if lost_subs != 0 or lost_grades != 0:
+    raise NotImplemented
+#  list_acc = lambda l, i: l + i
+
+#  projects = Project.objects.all()
+#  submissions = reduce(list_acc, [pj.submission_set.all() for pj in projects], [])
+#  subgrades = reduce(list_acc, [sub.submissiongrade_set.all() for sub in submissions], [])
+
+
+
+
+
+
+
+
+
+
+  # Create a Submission for every student. Also create the student if necessary
+  for p in projects:
+    # Create student
+    if not Student.objects.filter(uniqname=p):
+      stu = Student()
+      stu.name = stu.uniqname = p
+      stu.save()
+    assert len(Student.objects.filter(uniqname=p)) == 1
+    stu = Student.objects.filter(uniqname=p)[0]
+
+    # Create submission
+    proj = Submission()
+    proj.student = stu
+    proj.date = datetime.datetime.fromtimestamp(os.stat("%s/%s" % (sys.argv[2], p)).st_mtime)
+    proj.project = project
+    proj.grader = revwork[p]
+    proj.save()
+
+    # Create submission grade
+    sg = SubmissionGrade()
+    sg.grader = proj.grader
+    sg.submission = proj
+    sg.save()
+
+    # Create all linegrades
+    for li in project.lineitem_set.all():
+      lg = LineGrade()
+      lg.submissiongrade = sg
+      lg.lineitem = li
+      lg.save()
 
 if __name__ == '__main__':
     main()

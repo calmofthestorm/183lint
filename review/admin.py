@@ -29,6 +29,8 @@ class LineGradeInline(admin.TabularInline):
 
 class SubmissionGradeAdmin(admin.ModelAdmin):
   inlines = [LineGradeInline]
+  list_display = ["__unicode__", "submission", "complete"]
+  list_filter = ["grader", "complete"]
 
 admin.site.register(Project, ProjectAdmin)
 admin.site.register(SubmissionGrade, SubmissionGradeAdmin)
