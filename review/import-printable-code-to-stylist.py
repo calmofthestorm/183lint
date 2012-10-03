@@ -4,13 +4,14 @@ import sys
 import os
 import random
 import datetime
+import shutil
 
 def setup_environment():
-    pathname = os.path.dirname(sys.argv[0])
-    sys.path.append(os.path.abspath(pathname))
-    sys.path.append(os.path.normpath(os.path.join(os.path.abspath(pathname), '../')))
-    sys.path.append(os.path.normpath(os.path.join(os.path.abspath(pathname), '../stylist')))
-    os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
+  pathname = os.path.dirname(sys.argv[0])
+  sys.path.append(os.path.abspath(pathname))
+  sys.path.append(os.path.normpath(os.path.join(os.path.abspath(pathname), '../')))
+  sys.path.append(os.path.normpath(os.path.join(os.path.abspath(pathname), '../stylist')))
+  os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 
 # Must set up environment before imports.
 setup_environment()
@@ -108,7 +109,7 @@ def main(argv=None):
 
   # Begin by deleting any existing LineGrades, SubmissionGrades, and Submissions for the project
   if lost_subs != 0 or lost_grades != 0:
-    raise NotImplemented
+    raise NotImplementedError()
 #  list_acc = lambda l, i: l + i
 
 #  projects = Project.objects.all()
@@ -155,5 +156,16 @@ def main(argv=None):
       lg.lineitem = li
       lg.save()
 
+  # Create grader assignment folders
+  for grader in work.keys():
+    os.mkdir("%s/%s" % (sys.argv[4], grader.username))
+
+    for pj in work[grader]:
+      # Copy last submit of code into grader folders
+      subs = os.listdir("%s/%s" % (sys.argv[2], pj))
+      last_sub = sorted(subs, key=lambda s: map(int, s.replace("_", ".").split(".")))[-1]
+      shutil.copytree("%s/%s/%s" % (sys.argv[2], pj, last_sub),
+                      "%s/%s/%s" % (sys.argv[4], grader.username, pj))
+
 if __name__ == '__main__':
-    main()
+  main()
