@@ -3,10 +3,6 @@ from review.models import Student, Project, Submission, SubmissionGrade, \
 from django.contrib import admin
 import django.utils.encoding
 
-admin.site.register(Student)
-admin.site.register(Submission)
-admin.site.register(LineGrade)
-
 class LineItemInline(admin.TabularInline):
   fields = ["name", "points", "description"]
   model = LineItem
@@ -29,6 +25,7 @@ class LineGradeInline(admin.TabularInline):
 
 class SubmissionGradeAdmin(admin.ModelAdmin):
   inlines = [LineGradeInline]
+  readonly_fields = ["grader", "submission"]
   list_display = ["__unicode__", "submission", "complete"]
   list_filter = ["grader", "complete"]
 
