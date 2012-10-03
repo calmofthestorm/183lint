@@ -25,8 +25,8 @@ class Submission(models.Model):
   """Represents one student's submission to a project."""
   student = annoying.fields.AutoOneToOneField(Student)
   date = models.DateTimeField('date submitted')
-  project = annoying.fields.AutoOneToOneField(Project)
-  grader = annoying.fields.AutoOneToOneField(User, null=True)
+  project = models.ForeignKey(Project)
+  grader = models.ForeignKey(User, null=True)
 
   def __unicode__(self):
     try:
@@ -37,7 +37,7 @@ class Submission(models.Model):
 class SubmissionGrade(models.Model):
   """Represents one grader's grading one project."""
   grader = annoying.fields.AutoOneToOneField(User)
-  submission = annoying.fields.AutoOneToOneField(Submission)
+  submission = models.ForeignKey(Submission)
   comments = models.TextField(null=True)
   adjustment = models.IntegerField(default=0)
   complete = models.BooleanField(default=False)
@@ -51,7 +51,7 @@ class SubmissionGrade(models.Model):
 
 class LineItem(models.Model):
   """Represents one item on a project and the best possible score for it."""
-  project = annoying.fields.AutoOneToOneField(Project)
+  project = models.ForeignKey(Project)
   name = models.CharField(max_length=200)
   description = models.TextField()
   points = models.IntegerField()
@@ -73,4 +73,3 @@ class LineGrade(models.Model):
       return u"%s: %i/%i" % (self.lineitem.name, self.points, self.lineitem.points)
     except django.core.exceptions.ObjectDoesNotExist:
       return u"Broken"
-
