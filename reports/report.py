@@ -2,11 +2,16 @@
 
 import sys
 import os
+import numpy
 import random
 import datetime
 import shutil
 
+import scipy.stats
+import matplotlib.pyplot
+
 import HTML
+
 
 sys.path.extend(("..", "../stylist"))
 
@@ -29,78 +34,12 @@ from review.models import *
 default_color = {-2:"Red", -20:"Red", -40:"Red", -1:"Red",
                   0:"Maroon", 1:"Teal", 2:"Green"}
 
-# Report generation constants. This must match the rubric on the database.
-items = {"Indentation":
-           {-1:("Terrible indentation", "Red"),
-             0:("Needs work", "Maroon"),
-             1:("A few slipups", "Teal"),
-             2:("Consistent and good", "Green")},
-
-         "Whitespace around operators":
-           { 2:("Correct: one space on both sides of all operators", "Green"),
-             1:("A few slipups", "Teal"),
-             0:("Wrong/inconsistant", "Maroon")},
-
-         "Good Comments":
-           { 2:("Helpful comments of good quality, quantity", "Green"),
-             1:("Need to work on quality, quantity, helpful", "Teal"),
-             0:("Few or no useful comments", "Maroon"),
-            -1:("Distracting, useless, excessive, wrong", "Red")},
-
-         "Identifier name formatting":
-           { 1:("Pick a reasonable formatting and stick with it, i.e., myVarName, my_var_name, etc", "Green"),
-             0:"Fair to poor identifier formatting"},
-
-         "Identifier names helpful":
-           { 1:("Descriptive identifiers -- improves readability", "Green"),
-             0:"Identifiers not descriptive or helpful"},
-
-         "Long lines":
-           { 1:("No lines over 80 chars", "Green"),
-             0:"Only a few lines longer than 80 chars",
-            -1:"ANY lines over 90 chars or many lines over 80 chars"},
-
-         "Brace placement (including use for single-statement blocks)":
-           {-2:"Against our guideline - makes code difficult to follow",
-            -1:"inconsistent",
-             0:"mostly consistent",
-             1:("very consistent", "Green")},
-
-         "Magic numbers":
-           {-1:"Magic numbers present",
-             0:("No magic numbers", "Green")},
-
-         "Goto":
-           {-20:"ANY use of goto whatsoever (lose half pts on entire project)",
-              0:("Goto not used", "Green")},
-
-         "Global variables":
-           {-40:"ANY use of (non-const) global variables (lose full pts on entire project)",
-              0:("Global variables not used", "Green")},
-
-         "Break and Continue":
-           { 0:("Do not use break or continue OR use is sparing and actively contributes to readability", "Green"),
-            -1:"Excessive or irresponsible use of break/continue"},
-
-         "Conditionals":
-           {-1:"Code on same line as conditional tests, loops, etc",
-             0:("Conditionals formatted properly", "Green")},
-         }
-
-# Add automatic elements
-for (item, levels) in items.iteritems():
-  if min(levels.iterkeys()) >= -1:
-    levels[-2] = None
-
-  for i in range(-1, 3):
-    levels.setdefault(i, None)
-
-def make_report(sg):
+def make_report(sg, rubric):
   """Pass in a SubmissionGrade from Django."""
   T = HTML.Table()
 
   # Iterate over all items on rubric
-  for (item, levels) in items.iteritems():
+  for (item, levels) in rubric.iteritems():
     item = sg.linegrade_set.get(lineitem__name=item)
 
     # Catch graders' invalid scores
@@ -140,14 +79,79 @@ def make_report(sg):
       # Grade is a simple sum, but we won't give a negative grade for minor sins.
       grade = max(agg["points__sum"] + sg.adjustment, 0)
 
-    report = "<h1>EECS 183 %s style grade</h1><h2>%s</h2><h3>Grade: %i/%i</h3><p>%s</p>" % \
-                 (sg.submission.project.name, sg.submission.student.name, grade,
+    report = "<h1>EECS 183 %s style grade</h1><h2>%s</h2><h3>Grade: %%i/%i <font color=RED>P2 only -- NOT included in course grade (future projects will be)</font></h3><p>%s</p>" % \
+                 (sg.submission.project.name, sg.submission.student.name,
                   sg.submission.project.points, sg.comments.replace("\n", "<br/>"))
 
-  return report + str(T)
+  return report + str(T), grade
 
 def main():
-  pass
+  if len(sys.argv) != 4:
+    print "Usage: %s project_name rubric_dict out_dir" % sys.argv[0]
+    return
+
+  _, project, rubric, outdir = sys.argv
+  rubric = __import__(rubric[:-3]).rubric
+
+  assert not os.path.exists(outdir), "Out dir must not exist."
+  os.mkdir(outdir)
+
+  grades = {}
+  zeroes = {}
+  reports = {}
+
+  # Generate reports and compute curve.
+#  for sg in random.sample(SubmissionGrade.objects.filter(submission__project__name=project).all(), 50):
+  for sg in SubmissionGrade.objects.filter(submission__project__name=project):
+    name = sg.submission.student.name
+    report, grade = make_report(sg, rubric)
+    reports[name] = report, grade, sg.grader.username 
+
+    grades.setdefault(sg.grader.username, [])
+    if grade > 0:
+      grades[sg.grader.username].append(grade)
+    else:
+      zeroes.setdefault(sg.grader.username, 0)
+      zeroes[sg.grader.username] += 1
+
+  for k, v in grades.items():
+    print "%s: median=%f mean=%f (sigma=%f) [awarded %i non-positives and %i perfects]" % (k, numpy.median(v), numpy.mean(v), numpy.std(v), zeroes[k], v.count(10))
+    matplotlib.pyplot.clf()
+    matplotlib.pyplot.hist(v)
+    matplotlib.pyplot.title("Grader %s %s positive grades." % (k, project))
+    matplotlib.pyplot.savefig("%s.png" % k)
+
+  print
+  median, mean, std, curve_grader, curve = max(((numpy.median(v), numpy.mean(v), -numpy.std(v), k, v) \
+                                          for (k, v) in grades.items()))
+  print "Curving up to median %f (std %f) (grader %s) proportionally." % (median, -std, curve_grader)
+
+  curved_grades = {}
+  gifts = []
+  for (name, (report, orig_grade, grader)) in reports.iteritems():
+    if orig_grade > 0:
+      percentile = scipy.stats.percentileofscore(grades[grader], orig_grade)
+      new_score = scipy.stats.scoreatpercentile(grades[curve_grader], percentile)
+      new_score = min(max(orig_grade, int(round(new_score))), sg.submission.project.points)
+      gifts.append(new_score - orig_grade)
+      curved_grades.setdefault(grader, [])
+      curved_grades[grader].append(new_score)
+
+      grades[name] = (report, new_score, grader)
+
+  print "\nPost curve:"
+  for k, v in curved_grades.items():
+    print "%s: median=%f mean=%f (sigma=%f) [awarded %i non-positives and %i perfects]" % (k, numpy.median(v), numpy.mean(v), numpy.std(v), zeroes[k], v.count(10))
+
+  print
+
+  print "Curves given:"
+  for curve in set(gifts):
+    print "\t %i - to %i students" % (curve, gifts.count(curve))
+
+  for (name, (report, grade, grader)) in reports.iteritems():
+    os.mkdir("%s/%s" % (outdir, name))
+    open("%s/%s/report.html" % (outdir, name), 'w').write(report % grade)
 
 if __name__ == "__main__":
   main()
