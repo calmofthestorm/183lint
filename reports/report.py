@@ -1,11 +1,12 @@
 #! /usr/bin/env python
 
-import sys
-import os
-import numpy
-import random
 import datetime
+import imp
+import numpy
+import os
+import random
 import shutil
+import sys
 
 import scipy.stats
 import matplotlib.pyplot
@@ -91,7 +92,7 @@ def main():
     return
 
   _, project, rubric, outdir = sys.argv
-  rubric = __import__(rubric[:-3]).rubric
+  rubric = imp.load_source("rubric", rubric).rubric
 
   assert not os.path.exists(outdir), "Out dir must not exist."
   os.mkdir(outdir)
@@ -122,7 +123,7 @@ def main():
     matplotlib.pyplot.savefig("%s.png" % k)
 
   print
-  median, mean, std, curve_grader, curve = max(((numpy.median(v), numpy.mean(v), -numpy.std(v), k, v) \
+  median, std, curve_grader, curve = max(((numpy.median(v), -numpy.std(v), k, v) \
                                           for (k, v) in grades.items()))
   print "Curving up to median %f (std %f) (grader %s) proportionally." % (median, -std, curve_grader)
 
