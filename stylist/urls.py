@@ -13,5 +13,9 @@ urlpatterns = patterns('',
     # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
 
     # Uncomment the next line to enable the admin:
-    url(r'^admin/', include(admin.site.urls)),
+    url(r'^grades/', include(admin.site.urls)),
+    url(r'^cpplint/submit', 'cpplint.views.submit'),
+    url(r'^cpplint/upload', 'cpplint.views.upload'),
+    url(r'^cpplint/invalid', 'cpplint.views.invalid'),
+    url(r'^cpplint/', 'cpplint.views.submit'),
 )
