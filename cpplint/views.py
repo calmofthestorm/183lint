@@ -34,7 +34,7 @@ def upload(request):
 
       lint = {}
       for line in stdout:
-        if line.startswith("Done processin") or line.startswith("Total errors found"):
+        if line.startswith("Done processing") or line.startswith("Total errors found"):
           continue
         line_no, comment = line[2:].split(":", 1)
         lint[max(0, int(line_no) - 1)] = comment
