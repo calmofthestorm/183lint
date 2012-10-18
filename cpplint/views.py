@@ -23,11 +23,12 @@ File to upload: <input type=file name=file id=id_file><br>
 </form>""")
 
 def upload(request):
+  print os.getcwd()
   if request.method == 'POST':
     form = UploadFileForm(request.POST, request.FILES)
     if form.is_valid():
       their_code = request.FILES['file'].read()
-      stdin, stdout, stderr = os.popen3("python /home/alexr/um/183/stylist/cpplint/cpplint.py --filter=-legal,-readability/streams,-whitespace/newline,-readability/constructors,-runtime/arrays,-build/namespaces,-runtime/string,-readability/casting,-runtime/references,-readability/streams,-whitespace/labels,-readability/todo,-runtime/threadsafe_fn,-readability/header_guard,-whitespace/braces_google,-build/include_directory -")
+      stdin, stdout, stderr = os.popen3("python %s/cpplint/cpplint.py --filter=-legal,-readability/streams,-whitespace/newline,-readability/constructors,-runtime/arrays,-build/namespaces,-runtime/string,-readability/casting,-runtime/references,-readability/streams,-whitespace/labels,-readability/todo,-runtime/threadsafe_fn,-readability/header_guard,-whitespace/braces_google,-build/include_directory -" % os.getcwd())
       stdin.write(their_code)
       stdin.close()
 
@@ -46,6 +47,6 @@ def upload(request):
         else:
           response += space_escape(line) + "<br/>" + "\n"
 
-      return HttpResponse(response)
+      return HttpResponse("<h1>Comments will appear in green and the lines they apply to in red.</h1><h2> There are a total of %i suggestions for this file.</h2>" % len(lint) + response)
     else:
       return HttpResponseRedirect('/cpplint/invalid')
