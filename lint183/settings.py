@@ -72,8 +72,8 @@ STATICFILES_DIRS = (
 # List of finder classes that know how to find static files in
 # various locations.
 STATICFILES_FINDERS = (
-    'django.contrib.staticfiles.finders.FileSystemFinder',
-    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+#    'django.contrib.staticfiles.finders.FileSystemFinder',
+#    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 #    'django.contrib.staticfiles.finders.DefaultStorageFinder',
 )
 
@@ -83,8 +83,8 @@ SECRET_KEY = 'v@(^xb%&amp;)q(z0%@fdd@44ev@_vi&amp;b)-$d&amp;=emt+c*_(27kgb=3'
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.Loader',
-    'django.template.loaders.app_directories.Loader',
+#    'django.template.loaders.filesystem.Loader',
+#    'django.template.loaders.app_directories.Loader',
 #     'django.template.loaders.eggs.Loader',
 )
 
@@ -111,11 +111,11 @@ TEMPLATE_DIRS = (
 
 INSTALLED_APPS = (
 #    'django.contrib.auth',
-    'django.contrib.contenttypes',
+#    'django.contrib.contenttypes',
 #    'django.contrib.sessions',
-    'django.contrib.sites',
+#    'django.contrib.sites',
 #    'django.contrib.messages',
-    'django.contrib.staticfiles',
+#    'django.contrib.staticfiles',
     'cpplint',
     # Uncomment the next line to enable the admin:
     # 'django.contrib.admin',
