@@ -42,4 +42,4 @@ echo
 echo
 echo To automatically run the service, add the below line to crontab (edit port, ip as necessary)
 echo  Fix the path if $1 is not an absolute path
-echo "*/1 * * * * cd /z/eecs183/${1}; /z/eecs183/${1}/bin/python manage.py runserver 141.212.113.64:15180 > /dev/null >> /dev/null # Port binding as lock."
+echo "*/1 * * * * cd ${1}; ${1}/bin/python manage.py runserver 141.212.113.64:15180 > /dev/null >> /dev/null # Port binding as lock."
