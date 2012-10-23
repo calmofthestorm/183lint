@@ -1,17 +1,16 @@
 import collections
 import os
-import string
 
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse
 from django import forms
 from django.shortcuts import render
-from django.template.defaultfilters import escape
 
 class UploadFileForm(forms.Form):
-    file  = forms.FileField()
+  file  = forms.FileField()
 
 def invalid(request):
-  return HttpResponse("Upload was not successful. <a href='/cpplint>Try again</a>")
+  return HttpResponse("Upload was not successful."
+                      "<a href='/cpplint>Try again</a>")
 
 def upload(request):
   env = {}
@@ -37,7 +36,7 @@ def upload(request):
             stdin.write(their_code)
             stdin.close()
             for line in stdout:
-              fn, line_no, comment = line.split(":", 2)
+              filename, line_no, comment = line.split(":", 2)
               lint[max(0, int(line_no) - 1)].append(comment)
 
       # Format and return the response
