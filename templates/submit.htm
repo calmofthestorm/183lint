@@ -50,11 +50,13 @@
         <ul>
             {% for result in lint_result %}
                 {% if result.lint %}
-                    <li>
-                      <a href="#{{ result.line_number }}">
-                          {{ result.line_number }} - {{ result.lint }}
-                      </a>
-                    </li>
+                    {% for comment in result.lint %}
+                        <li>
+                            <a href="#{{ result.line_number }}">
+                                {{ result.line_number }} - {{ comment }}
+                            </a>
+                        </li>
+                    {% endfor %}
                 {% endif %}
             {% endfor %}
         </ul>
@@ -63,7 +65,9 @@
         {% if result.lint %}
             <a id="{{ result.line_number }}" name="{{ result.line_number }}"></a>
             <div class="fixed code error">{{ result.line }}</div>
-            <div class="fixed suggestion">// ^^^ SUGGESTION: {{ result.lint }}</div>
+            {% for comment in result.lint %}
+                <div class="fixed suggestion">// ^^^ SUGGESTION: {{ comment }}</div>
+            {% endfor %}
         {% else %}
             <div class="fixed code">{{ result.line }}</div>
         {% endif %}
