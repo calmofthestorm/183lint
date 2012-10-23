@@ -5,8 +5,7 @@ from django.conf.urls import patterns, include, url
 # admin.autodiscover()
 
 urlpatterns = patterns('',
-    url(r'^cpplint/submit', 'cpplint.views.submit'),
     url(r'^cpplint/upload', 'cpplint.views.upload'),
     url(r'^cpplint/invalid', 'cpplint.views.invalid'),
-    url(r'^cpplint/', 'cpplint.views.submit'),
+    url(r'^cpplint/', 'cpplint.views.upload'),
 )

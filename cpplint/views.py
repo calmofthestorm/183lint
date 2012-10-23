@@ -1,36 +1,36 @@
+import collections
+import os
+import string
+
 from django.http import HttpResponse, HttpResponseRedirect
 from django import forms
+from django.shortcuts import render
 from django.template.defaultfilters import escape
 
-import collections
+import cpplint_config
 
-def space_escape(s):
-  return escape(s).replace("\t", "&nbsp;&nbsp;").replace(" ", "&nbsp;")
-
-import os
+from verifycppbraces.BraceVerify.brace_verify import get_brace_matching
+from verifycppbraces.BraceVerify.brace_verify import BLOCK
+from verifycppbraces.BraceVerify.brace_verify import EGYPTIAN
+from verifycppbraces.BraceVerify.brace_verify import UNKNOWN
 
 class UploadFileForm(forms.Form):
-    title = forms.CharField(max_length=50)
     file  = forms.FileField()
 
 def invalid(request):
-  return HttpResponse("Upload was not successful. <a href='/cpplint/submit>Try again</a>")
-
-def submit(request):
-  return HttpResponse("""<form method='POST' enctype='multipart/form-data' action='/cpplint/upload'>
-File to upload: <input type=file name=file id=id_file><br>
-<br>
-<input type=hidden name=title it=id_title value=foo />
-<input type=submit value=Press> to upload the file!
-</form>""")
+  return HttpResponse("Upload was not successful. <a href='/cpplint>Try again</a>")
 
 def upload(request):
-  print os.getcwd()
+  env = {}
   if request.method == 'POST':
     form = UploadFileForm(request.POST, request.FILES)
     if form.is_valid():
+      # Prepare to process their code
       their_code = request.FILES['file'].read()
+      their_code_lines = their_code.split('\n')
       lint = collections.defaultdict(list)
+
+      # Execute all plugins
       for plugin in open("cpplint/plugins.conf"):
         try:
           plugin, _ = plugin.split("#", 1)
@@ -46,15 +46,12 @@ def upload(request):
             fn, line_no, comment = line.split(":", 2)
             lint[max(0, int(line_no) - 1)].append(comment)
 
-      response = ""
-      for (line_no, line) in enumerate(their_code.split("\n")):
-        if line_no in lint:
-          response += "<font color=red>%s</font><br/>" % space_escape(line) + "\n"
-          for comment in lint[line_no]:
-            response += "<font color=green>// ^^^ SUGGESTION: %s</font><br/>" % space_escape(comment.replace("\n", "")) + "\n"
-        else:
-          response += space_escape(line) + "<br/>" + "\n"
+      env['lint_count'] = len(lint)
+      env['lint_result'] = [{
+          'line': line.replace('\t', ' ' * 4),
+          'lint': lint[line_no] if line_no in lint else None,
+          'line_number': line_no + 1
+        } for line_no, line in enumerate(their_code_lines)
+      ]
 
-      return HttpResponse("<h1>Comments will appear in green and the lines they apply to in red.</h1><h2> There are a total of %i suggestions for this file.</h2>" % sum(map(len, lint.values())) + response)
-    else:
-      return HttpResponseRedirect('/cpplint/invalid')
+  return render(request, 'templates/submit.htm', env)
