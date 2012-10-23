@@ -1,0 +1,77 @@
+{% extends 'templates/base.htm' %}
+
+{% block pagetitle %}183 Cpp Lint{% endblock %}
+
+{% block style %}
+<style>
+    .fixed {
+        font-family: monospace;
+        white-space: pre;
+    }
+    .code {
+        counter-increment: line;
+    }
+    .code:before {
+        content: counter(line);
+        width: 30px;
+        display: inline-block;
+        color: #aaa;
+        margin-right: 5px;
+        border-right: 1px solid #bbb;
+    }
+    .error {
+        color: #f00;
+    }
+    .suggestion {
+        color: #0a0;
+    }
+    .suggestion:before {
+        content: ' ';
+        display: inline-block;
+        width: 30px;
+        margin-right: 5px;
+        border-right: 1px solid #bbb;
+        background-color: #f00;
+    }
+</style>
+{% endblock %}
+
+{% block primary %}
+
+<form method="POST" enctype="multipart/form-data" action="/cpplint/upload">
+  File to upload: <input type="file" name="file" id="id_file"><br>
+  <br>
+  <input type="submit" value="Press"> to upload the file!
+</form>
+
+{% if lint_result %}
+    <h2> There are a total of {{ lint_count }} suggestions for this file.</h2>
+    {% ifnotequal lint_count 0 %}
+        <ul>
+            {% for result in lint_result %}
+                {% if result.lint %}
+                    {% for comment in result.lint %}
+                        <li>
+                            <a href="#{{ result.line_number }}">
+                                {{ result.line_number }} - {{ comment }}
+                            </a>
+                        </li>
+                    {% endfor %}
+                {% endif %}
+            {% endfor %}
+        </ul>
+    {% endifnotequal %}
+    {% for result in lint_result %}
+        {% if result.lint %}
+            <a id="{{ result.line_number }}" name="{{ result.line_number }}"></a>
+            <div class="fixed code error">{{ result.line }}</div>
+            {% for comment in result.lint %}
+                <div class="fixed suggestion">// ^^^ SUGGESTION: {{ comment }}</div>
+            {% endfor %}
+        {% else %}
+            <div class="fixed code">{{ result.line }}</div>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+{% endblock %}
