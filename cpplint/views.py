@@ -7,13 +7,6 @@ from django import forms
 from django.shortcuts import render
 from django.template.defaultfilters import escape
 
-import cpplint_config
-
-from verifycppbraces.BraceVerify.brace_verify import get_brace_matching
-from verifycppbraces.BraceVerify.brace_verify import BLOCK
-from verifycppbraces.BraceVerify.brace_verify import EGYPTIAN
-from verifycppbraces.BraceVerify.brace_verify import UNKNOWN
-
 class UploadFileForm(forms.Form):
     file  = forms.FileField()
 
@@ -31,21 +24,23 @@ def upload(request):
       lint = collections.defaultdict(list)
 
       # Execute all plugins
-      for plugin in open("cpplint/plugins.conf"):
-        try:
-          plugin, _ = plugin.split("#", 1)
-        except ValueError:
-          pass
-        plugin = plugin.strip()
+      with open('cpplint/plugins.conf') as plugin_file:
+        for plugin in plugin_file:
+          try:
+            plugin, _ = plugin.split("#", 1)
+          except ValueError:
+            pass
+          plugin = plugin.strip()
 
-        if plugin:
-          stdin, stdout, stderr = os.popen3("bash -c '%s'" % plugin)
-          stdin.write(their_code)
-          stdin.close()
-          for line in stdout:
-            fn, line_no, comment = line.split(":", 2)
-            lint[max(0, int(line_no) - 1)].append(comment)
+          if plugin:
+            stdin, stdout, stderr = os.popen3("bash -c '%s'" % plugin)
+            stdin.write(their_code)
+            stdin.close()
+            for line in stdout:
+              fn, line_no, comment = line.split(":", 2)
+              lint[max(0, int(line_no) - 1)].append(comment)
 
+      # Format and return the response
       env['lint_count'] = len(lint)
       env['lint_result'] = [{
           'line': line.replace('\t', ' ' * 4),
@@ -55,3 +50,4 @@ def upload(request):
       ]
 
   return render(request, 'templates/submit.htm', env)
+
