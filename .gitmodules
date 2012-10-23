@@ -1,0 +1,3 @@
+[submodule "verifycppbraces"]
+	path = verifycppbraces
+	url = git://github.com/asottile/verifycppbraces.git
