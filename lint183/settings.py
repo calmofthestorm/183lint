@@ -83,7 +83,7 @@ SECRET_KEY = 'v@(^xb%&amp;)q(z0%@fdd@44ev@_vi&amp;b)-$d&amp;=emt+c*_(27kgb=3'
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
-#    'django.template.loaders.filesystem.Loader',
+    'django.template.loaders.filesystem.Loader',
 #    'django.template.loaders.app_directories.Loader',
 #     'django.template.loaders.eggs.Loader',
 )
@@ -104,6 +104,7 @@ ROOT_URLCONF = 'lint183.urls'
 WSGI_APPLICATION = 'lint183.wsgi.application'
 
 TEMPLATE_DIRS = (
+    './',
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
