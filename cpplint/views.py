@@ -6,6 +6,8 @@ from django import forms
 from django.shortcuts import render
 from django.template.defaultfilters import escape
 
+import cpplint_config
+
 from verifycppbraces.BraceVerify.brace_verify import get_brace_matching
 from verifycppbraces.BraceVerify.brace_verify import BLOCK
 from verifycppbraces.BraceVerify.brace_verify import EGYPTIAN
@@ -23,8 +25,12 @@ def upload(request):
     form = UploadFileForm(request.POST, request.FILES)
     if form.is_valid():
       their_code = request.FILES['file'].read()
-      # TODO: put this in some sort of config
-      stdin, stdout, stderr = os.popen3("python %s/cpplint/cpplint.py --filter=-legal,-readability/streams,-whitespace/newline,-readability/constructors,-runtime/arrays,-build/namespaces,-runtime/string,-readability/casting,-runtime/references,-readability/streams,-whitespace/labels,-readability/todo,-runtime/threadsafe_fn,-readability/header_guard,-whitespace/braces_google,-build/include_directory -" % os.getcwd())
+      stdin, stdout, stderr = os.popen3(
+        "python %s/cpplint/cpplint.py %s" % (
+          os.getcwd(),
+          cpplint_config.CPPLINT_ARGUMENTS
+        )
+      )
       stdin.write(their_code)
       stdin.close()
 
@@ -40,52 +46,53 @@ def upload(request):
           lint[lint_index] = []
         lint[lint_index].append(string.strip(comment))
 
-      braces = get_brace_matching(their_code_lines)
+      if cpplint_config.BRACE_VERIFY_ENABLED:
+        braces = get_brace_matching(their_code_lines)
 
-      brace_counts = {
+        brace_counts = {
           EGYPTIAN: 0,
           BLOCK: 0,
           UNKNOWN: 0
-      }
-      for brace in braces:
-        brace_counts[brace.start_brace.brace_type] += 1
+        }
+        for brace in braces:
+          brace_counts[brace.start_brace.brace_type] += 1
 
-        # unknown braces
-        if brace.start_brace.brace_type == UNKNOWN:
-          for line_no in [brace.start_brace.line_number, brace.end_line_number]:
-            line_index = line_no - 1
-            if not line_index in lint:
-              lint[line_index] = []
-            lint[line_index].append(
-              'Unknown brace type? start %s end %s' % (
-                brace.start_brace.line_number,
-                brace.end_line_number
+          # unknown braces
+          if brace.start_brace.brace_type == UNKNOWN:
+            for line_no in [brace.start_brace.line_number, brace.end_line_number]:
+              line_index = line_no - 1
+              if not line_index in lint:
+                lint[line_index] = []
+              lint[line_index].append(
+                'Unknown brace type? start %s end %s' % (
+                  brace.start_brace.line_number,
+                  brace.end_line_number
+                )
               )
-            )
 
-        if brace.start_brace.index != brace.end_index:
-          for line_no in [brace.start_brace.line_number, brace.end_line_number]:
-            line_index = line_no - 1
-            if not line_index in lint:
-              lint[line_index] = []
-            lint[line_index].append(
-              'Mismatched brace indent. Start Line %s@%s End Line %s@%s' % (
-                brace.start_brace.line_number,
-                brace.start_brace.index,
-                brace.end_line_number,
-                brace.end_index
+          if brace.start_brace.index != brace.end_index:
+            for line_no in [brace.start_brace.line_number, brace.end_line_number]:
+              line_index = line_no - 1
+              if not line_index in lint:
+                lint[line_index] = []
+              lint[line_index].append(
+                'Mismatched brace indent. Start Line %s@%s End Line %s@%s' % (
+                  brace.start_brace.line_number,
+                  brace.start_brace.index,
+                  brace.end_line_number,
+                  brace.end_index
+                )
               )
-            )
 
-      if bool(brace_counts[EGYPTIAN]) == bool(brace_counts[BLOCK]):
-        if not 0 in lint:
-          lint[0] = []
-        lint[0].append(
-          'Inconsistent brace usage.  Egyptian: %s, Block: %s' % (
-            brace_counts[EGYPTIAN],
-            brace_counts[BLOCK]
+        if bool(brace_counts[EGYPTIAN]) == bool(brace_counts[BLOCK]):
+          if not 0 in lint:
+            lint[0] = []
+          lint[0].append(
+            'Inconsistent brace usage.  Egyptian: %s, Block: %s' % (
+              brace_counts[EGYPTIAN],
+              brace_counts[BLOCK]
+            )
           )
-        )
 
       env['lint_count'] = len(lint)
       env['lint_result'] = [{
