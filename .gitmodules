@@ -1,3 +1,0 @@
-[submodule "cpplint/verifycppbraces"]
-	path = cpplint/verifycppbraces
-	url = git://github.com/asottile/verifycppbraces.git
