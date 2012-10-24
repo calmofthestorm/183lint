@@ -20,7 +20,7 @@ def upload(request):
       # Execute all plugins
       with open('cpplint/plugins.conf') as plugin_file:
         for plugin in plugin_file:
-          plugin = plugin.rstrip() if plugin[0] != '#' else None
+          plugin = plugin.strip() if plugin[0] != '#' else None
 
           if plugin:
             stdin, stdout, stderr = os.popen3("bash -c '%s'" % plugin)
