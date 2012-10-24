@@ -6,6 +6,5 @@ from django.conf.urls import patterns, include, url
 
 urlpatterns = patterns('',
     url(r'^cpplint/upload', 'cpplint.views.upload'),
-    url(r'^cpplint/invalid', 'cpplint.views.invalid'),
     url(r'^cpplint/', 'cpplint.views.upload'),
 )

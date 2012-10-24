@@ -1,16 +1,11 @@
 import collections
 import os
 
-from django.http import HttpResponse
 from django import forms
 from django.shortcuts import render
 
 class UploadFileForm(forms.Form):
   file  = forms.FileField()
-
-def invalid(request):
-  return HttpResponse("Upload was not successful."
-                      "<a href='/cpplint>Try again</a>")
 
 def upload(request):
   env = {}
@@ -25,11 +20,7 @@ def upload(request):
       # Execute all plugins
       with open('cpplint/plugins.conf') as plugin_file:
         for plugin in plugin_file:
-          try:
-            plugin, _ = plugin.split("#", 1)
-          except ValueError:
-            pass
-          plugin = plugin.strip()
+          plugin = plugin.rstrip() if plugin[0] != '#' else None
 
           if plugin:
             stdin, stdout, stderr = os.popen3("bash -c '%s'" % plugin)
