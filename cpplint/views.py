@@ -20,15 +20,18 @@ def upload(request):
       # Execute all plugins
       with open('cpplint/plugins.conf') as plugin_file:
         for plugin in plugin_file:
-          plugin = plugin.strip() if plugin[0] != '#' else None
+          try:
+            plugin = plugin.strip() if plugin[0] != '#' else None
 
-          if plugin:
-            stdin, stdout, stderr = os.popen3("bash -c '%s'" % plugin)
-            stdin.write(their_code)
-            stdin.close()
-            for line in stdout:
-              filename, line_no, comment = line.split(":", 2)
-              lint[max(0, int(line_no) - 1)].append(comment)
+            if plugin:
+              stdin, stdout, stderr = os.popen3("bash -c '%s'" % plugin)
+              stdin.write(their_code)
+              stdin.close()
+              for line in stdout:
+                filename, line_no, comment = line.split(":", 2)
+                lint[max(0, int(line_no) - 1)].append(comment)
+          except:
+            lint[0].append("WARNING: Plugin %s crashed." % plugin)
 
       # Format and return the response
       env['lint_count'] = len(lint)
