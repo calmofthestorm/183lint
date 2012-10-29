@@ -6,7 +6,7 @@
 import os, sys, collections, re
 
 indent_regex = re.compile("^([ \t]*)")
-statement_end_regex = re.compile("^.*(?:\\;)[ \t]*(?://)?[ \t]*$")
+statement_end_regex = re.compile("^.*(?:\\;|{)[ \t]*(?://)?[ \t]*$")
 label_regex = re.compile("[ \t]*[_0-9a-zA-Z]\\:")
 array_decl_regex = re.compile("\\[[0-9]*\\]")
 
