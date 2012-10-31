@@ -30,7 +30,7 @@ def upload(request):
               for line in stdout:
                 filename, line_no, comment = line.split(":", 2)
                 lint[max(0, int(line_no) - 1)].append(comment)
-          except:
+          except Exception:
             lint[0].append("WARNING: Plugin %s crashed." % plugin)
 
       # Format and return the response
