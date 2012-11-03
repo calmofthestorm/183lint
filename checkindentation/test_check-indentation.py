@@ -8,6 +8,8 @@ FILES = [
   "bad.cpp",
   "mixed.cpp",
   "perfect.cpp",
+  "sieve.cpp",
+  "statistics.cpp",
   "tabs.cpp"
   ]
 

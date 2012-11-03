@@ -13,7 +13,10 @@ array_decl_regex = re.compile("\\[[0-9]*\\]")
 def warning(line, text):
   return "-:%i:%s" % (line + 1, text)
 
-SYMS = {"tabs":"\t", "2 spaces":"  ", "3 spaces":"   ", "4 spaces":"    "}
+SYMS = (("4 spaces", "    "),
+        ("3 spaces", "   "),
+        ("2 spaces", "  ") ,
+        ("tabs", "\t"))
 
 def check_indentation(infile):
   # Count indents
@@ -38,8 +41,12 @@ def check_indentation(infile):
         yield warning(lineno, "Tabs and spaces found on same line. Pick a style"
                               "and stick with it.")
       else:
-        for (k, v) in SYMS.items():
-          if ind == v * level:
+        # Keep track of number of lines indented each style. This lets us
+        # check for inconsistencies and warn about them.
+        for (k, v) in SYMS:
+          if level == 0:
+            break
+          elif ind == v * level:
             count[k].append((lineno, level))
             break
         else:
